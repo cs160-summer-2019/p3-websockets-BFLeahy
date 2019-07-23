@@ -7,16 +7,24 @@
     <title>P4 Drawing</title>
 
     <link rel="stylesheet" type="text/css" href="{% static 'draw/vendor/bootstrap/css/bootstrap.min.css' %}">
-    <script type="text/javascript" src="{% static 'draw/vendor/jquery/jquery-3.3.1.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'draw/vendor/paper/paper-full.min.js' %}"></script>
 
     <style type="text/css">
     </style>
+  
+  <script
+    src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+    crossorigin="anonymous">
+    </script>
 
 </head>
 <body>
     <!-- You may change the dimensions of this canvas -->
     <canvas id="myCanvas" width="750px" height="750px"></canvas>
+  <p id="para">
+    
+  </p>
 </body>
 <script>
 
@@ -24,12 +32,60 @@
     var canvas = document.getElementById('myCanvas');
     paper.setup(canvas);
     var tool = new paper.Tool();
-
     // getting the URL (you may want to use for Exercise 3)
     var url = window.location.href;
 
-    // var socket = new WebSocket(
-    //     'wss://<your url here>/ws/draw');
+    var socket = new WebSocket('wss://p3-websockets-BFLeahy-brendanleahy778216.codeanyapp.com/ws/draw');
+  
+  
+  
+    var r = Math.random();  
+    var path = new paper.Path();
+    var st = Math.floor((Math.random() * 16777215)).toString(16);
+    var co = "#" + st;
+    tool.onMouseMove = function(event) {
+      path.add(event.point);
+      path.strokeColor = co;
+      var s = {user:r, color:co, x:event.point.x, y:event.point.y};
+      socket.send(JSON.stringify(s));
+    }
+    
+    var u = {};
+    var pa;
+    socket.onmessage = function (msg) {
+      var p = JSON.parse(msg.data);
+      var us = p.user;
+      if (us !== r && url.indexOf("large") > -1) {
+       pa = u[us];
+       if (pa == undefined) {
+        pa = new paper.Path();
+        u[us] = pa;
+        }
+       pa.strokeColor = p.color;
+       var po = new paper.Point(p.x, p.y);
+        pa.add(po);
+      }
+    }
+    
+    var g = 0;
+    var ma = 0;
+    $(document).ready(() => {
+      window.addEventListener('deviceorientation', (event) => {
+        if (event.gamma - g > 10) {
+          var nst = Math.floor((Math.random() * 16777215)).toString(16)
+          co = "#" + nst;
+          path.strokeColor = co;
+        }
+        g = event.gamma;
+      });
+      window.addEventListener('devicemotion', (event) => {
+        var totalAcceleration = Math.abs(event.acceleration.x) + Math.abs(event.acceleration.y) + Math.abs(event.acceleration.z);
+        if (totalAcceleration > 40) {
+          path.removeSegments();
+        }  
+      });
+    });
+    
 
 
 </script>
