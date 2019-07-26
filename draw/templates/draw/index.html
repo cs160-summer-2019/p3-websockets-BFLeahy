@@ -16,20 +16,21 @@
     src="https://code.jquery.com/jquery-3.4.1.min.js"
     integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
     crossorigin="anonymous">
+    
+    
     </script>
 
 </head>
 <body>
     <!-- You may change the dimensions of this canvas -->
-    <canvas id="myCanvas" width="750px" height="750px"></canvas>
-  <p id="para">
-    
-  </p>
+    <!-- <canvas id="myCanvas" width="750px" height="750px"></canvas> -->
+    <audio src = "{% static 'symphony.m4a' %}" id="song" preload="auto" controls></audio
+  </button>
 </body>
 <script>
 
     // setting up the canvas and one paper tool
-    var canvas = document.getElementById('myCanvas');
+  /*  var canvas = document.getElementById('myCanvas');
     paper.setup(canvas);
     var tool = new paper.Tool();
     // getting the URL (you may want to use for Exercise 3)
@@ -86,7 +87,11 @@
       });
     });
     
-
+*/
+  
+  $('#song').bind('canplay', function() {
+  this.currentTime = 29; // jumps to 29th secs
+});
 
 </script>
 </html>
