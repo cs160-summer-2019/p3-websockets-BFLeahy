@@ -84,16 +84,18 @@
     </div>
     <div class="row">
       <div class="col">
-        <div id="sli">
+        <form action="#" id = "lowform">
+          Low: <input type="text" name="low">
+          <input type="submit" value="Set">
+        </form>
         </div>
+      <div class="col">
+        <form action="#" id = "highform">
+          High: <input type="text" name="high">
+          <input type="submit" value="Set">
+        </form>
       </div>
     </div>
-    <div class="row">
-      <div class="col" align="center">
-        <p id="duration">
-          
-        </p>
-      </div>
     </div>
   
     
@@ -160,11 +162,27 @@
     });
     
 */
+  u = window.location.href;
+  const urlParams = new URLSearchParams(window.location.search);
+  var songName = urlParams.get('songName');
+  console.log(songName);
+  var oMiTime = urlParams.get('low');
+  var oMaTime = urlParams.get('high');
   var socket = new WebSocket('wss://p3-websockets-BFLeahy-brendanleahy778216.codeanyapp.com/ws/draw');
+  maxTime = 100;
+  minTime = 0;
   $(document).ready(() => {
     s = document.getElementById("song");
-    maxTime = 100;
-    minTime = 0;
+    if (songName !== null) {
+        if (songName == "https://p3-websockets-bfleahy-brendanleahy778216.codeanyapp.com/static/bach.mp3/") {
+          switchSong(1);
+        } else if (songName == "https://p3-websockets-bfleahy-brendanleahy778216.codeanyapp.com/static/stravinsky.mp3/") {
+          switchSong(2);
+        } else if (songName == "https://p3-websockets-bfleahy-brendanleahy778216.codeanyapp.com/static/der.m4a/") {
+          switchSong(3);
+        }
+        songName = null;
+      }
     s.addEventListener("seeked", function() {}, true);
     $("#sli").slider({
       range: true,
@@ -173,6 +191,14 @@
       s.currentTime = 0;
       minTime = 0;
       maxTime = s.duration;
+      if (oMiTime !== null) {
+        minTime = oMiTime;
+        oMiTime = null;
+      }
+      if (oMaTime !== null) {
+        maxTime = oMaTime;
+        oMaTime = null;
+      }
       $("#duration").text("0 seconds to " + Math.floor(maxTime).toString() + " seconds");
       $( "#sli" ).slider( "option", "max", maxTime );
       $( "#sli" ).slider( "option", "min", 0 );
@@ -202,6 +228,18 @@
         s.currentTime = minTime;
       }
     }, true);
+    
+    $('#highform').submit(function(eventObj) {
+    $(this).append('<input type="hidden" name="songName" value=' + s.src + '/> ');
+    $(this).append('<input type="hidden" name="low" value=' + minTime + '> ');
+    return true;
+    });
+    $('#lowform').submit(function(eventObj) {
+    $(this).append('<input type="hidden" name="high" value=' + maxTime + '> ');
+    $(this).append('<input type="hidden" name="songName" value=' + s.src + '/> ');
+    
+    return true;
+    });
    });
   
   function play() {
@@ -215,6 +253,7 @@
   function send() {
     var m = {song:s.src, start:minTime, end:maxTime};
     socket.send(JSON.stringify(m));
+    console.log(m);
   };
   
   function switchSong(index) {
@@ -249,5 +288,9 @@
         break;      
     }
   };
+  
+  function setLow() {
+    console.log(document.getElementById("lowform"));
+  }
 </script>
 </html>
