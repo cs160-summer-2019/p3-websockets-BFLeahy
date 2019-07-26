@@ -6,28 +6,99 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>P4 Drawing</title>
 
-    <link rel="stylesheet" type="text/css" href="{% static 'draw/vendor/bootstrap/css/bootstrap.min.css' %}">
-    <script type="text/javascript" src="{% static 'draw/vendor/paper/paper-full.min.js' %}"></script>
-
-    <style type="text/css">
-    </style>
-  
-  <script
+    <script
     src="https://code.jquery.com/jquery-3.4.1.min.js"
     integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
     crossorigin="anonymous">
-    
-    
     </script>
+    <link rel="stylesheet" type="text/css" href="{% static 'draw/vendor/bootstrap/css/bootstrap.min.css' %}">
+    <script type="text/javascript" src="{% static 'draw/vendor/paper/paper-full.min.js' %}"></script>
+    <link rel="stylesheet" type="text/css" href="{% static 'draw/vendor/jquery-ui/jquery-ui.css' %}">
+    <script src="{% static 'draw/vendor/jquery-ui/jquery-ui.js' %}"></script>
+
+    <style type="text/css">
+      body {
+        padding-top: 2em;
+      }
+      
+      .sbtn {
+        height: 187.5px;
+        background-color: lightgray;
+        text-align: center;
+      }
+    </style>
+  
+  
 
 </head>
 <body>
     <!-- You may change the dimensions of this canvas -->
     <!-- <canvas id="myCanvas" width="750px" height="750px"></canvas> -->
-    <audio src = "{% static 'symphony.m4a' %}" id="song" preload="auto" controls></audio
-  </button>
+  <div class="container">
+    <div class="row" style="padding-bottom:1em;">
+      <div class="col" style="height:750px;outline:2px solid black;padding-right:0;padding-left:0;">
+        <div class="sbtn" style="border-bottom:2px solid black" onclick="switchSong(0)">
+          Variation
+          <div style="height:60px;width:60px;background:#428bca;margin-left:1em;margin-top:2em;border:2px solid black;" id="b0">
+            
+          </div>
+        </div>
+        <div class="sbtn" style="border-bottom:2px solid black" onclick="switchSong(1)">
+          Song 2
+          <div style="height:60px;width:60px;background:white;margin-left:1em;margin-top:2em;border:2px solid black;" id="b1">
+            
+          </div>
+        </div>
+        <div class="sbtn" style="border-bottom:2px solid black" onclick="switchSong(2)">
+          Song 3
+          <div style="height:60px;width:60px;background:white;margin-left:1em;margin-top:2em;border:2px solid black;" id="b2">
+            
+          </div>
+        </div>
+        <div class="sbtn" onclick="switchSong(3)">
+          Song 4
+          <div style="height:60px;width:60px;background:white;margin-left:1em;margin-top:2em;border:2px solid black;" id="b3">
+            
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row" style="padding-bottom:1em">
+      <div class="col" align="center">
+        <audio src = "{% static 'variations.mp3' %}" id="song" preload="auto"></audio>
+        <div id="Time" style="font-size:48px">
+          00:00
+        </div>
+      </div>
+    </div>
+    <div class="row" style="padding-bottom:3em">
+      <div class="col" align="center">
+        <button class="btn btn-primary" onclick = "play()">
+          Play/Pause
+        </button>
+        <button class="btn btn-primary" onclick = "send()">
+          Done
+        </button> 
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <div id="sli">
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col" align="center">
+        <p id="duration">
+          
+        </p>
+      </div>
+    </div>
+  
+    
+  </div>
 </body>
-<script>
+<script type="text/javascript">
 
     // setting up the canvas and one paper tool
   /*  var canvas = document.getElementById('myCanvas');
@@ -88,10 +159,69 @@
     });
     
 */
-  
-  $('#song').bind('canplay', function() {
-  this.currentTime = 29; // jumps to 29th secs
-});
+  var socket = new WebSocket('wss://p3-websockets-BFLeahy-brendanleahy778216.codeanyapp.com/ws/draw');
+  $(document).ready(() => {
+    s = document.getElementById("song");
+    maxTime = 100;
+    minTime = 0;
+    s.addEventListener("seeked", function() {}, true);
+    $("#sli").slider({
+      range: true,
+    });
+    $("#song").on("loadeddata", function () {
+      maxTime = s.duration;
+      $("#duration").text("0 seconds to " + Math.floor(maxTime).toString() + " seconds");
+      $( "#sli" ).slider( "option", "max", maxTime );
+      $( "#sli" ).slider( "option", "min", 0 );
+      $( "#sli" ).slider( "option", "values", [0, maxTime] );
+    });
 
+
+    $( "#sli" ).on( "slidestop", function( event, ui ) {
+      if (ui.handleIndex == 0) {
+        minTime = ui.value;
+      } else {
+        maxTime = ui.value;
+      }
+      $("#duration").text(Math.floor(minTime).toString() + " seconds to " + Math.floor(maxTime).toString() + " seconds");
+    } );
+
+    s.addEventListener("timeupdate", function() {
+      if (s.currentTime >= maxTime) {
+        s.pause();
+      } else if (s.currentTime < minTime) {
+        s.currentTime = minTime;
+      }
+      $("#Time").text(Math.floor(s.currentTime / 60).toString().padStart(2, '0') + ":" + Math.floor(s.currentTime % 60).toString().padStart(2, '0'));
+    }, true);
+    s.addEventListener("play", function() {
+      if (s.currentTime >= maxTime || s.currentTime < minTime) {
+        s.currentTime = minTime;
+      }
+    }, true);
+   });
+  
+  function play() {
+    if (s.paused) {
+      s.play();
+    } else {
+      s.pause();
+    }
+  }
+  
+  function send() {
+    
+  }
+  
+  function switchSong(index) {
+    switch(index) {
+      case 0:
+        s.src = "{% static 'variations.mp3' %}"
+        document.getElementById("b0").background = "#428bca";
+        break;
+      case 1:
+        s.src = 
+    }
+  }
 </script>
 </html>
